@@ -1,0 +1,64 @@
+services:
+  score-app:
+    platform: linux/amd64
+    container_name: score-app
+    build:
+      dockerfile: Dockerfile
+      context: .
+      target: dev
+    volumes:
+      - ./config:/app/config
+    ports:
+      - "8181:8181"
+      - "8000:8000"
+    environment:
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=tempo:4318
+      - METRICS_PORT=8181
+      - SERVER_PORT=8000
+    depends_on:
+      - tempo
+    networks:
+      - score-app-network
+
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    ports:
+      - "3200:3200"       # Tempo backend server
+      - "4317:4317"       # if we had grpc
+      - "4318:4318"
+    volumes:
+      - ./config/tempo.yml:/etc/tempo/tempo.yml
+    command:
+      - '-config.file=/etc/tempo/tempo.yml'
+    networks:
+      - score-app-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command: --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - score-app
+    networks:
+      - score-app-network
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    volumes:
+          - ./config/datasource.yaml:/etc/grafana/provisioning/datasources/datasource.yml
+    depends_on:
+      - prometheus
+      - tempo
+    networks:
+      - score-app-network
+
+networks:
+  score-app-network:

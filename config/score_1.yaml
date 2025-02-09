@@ -1,0 +1,36 @@
+name: score_1
+
+metrics:
+  - name: metric_1
+    operation:
+      type: sum
+      parameters:
+        - source: waste.was_1
+        - source: disclosure.dis_2
+
+  - name: metric_2
+    operation:
+      type: or
+      parameters:
+        - source: emissions.emi_1
+          param: x
+        - source: emissions.emi_4
+          param: y
+
+  - name: metric_3
+    operation:
+      type: divide
+      parameters:
+        - source: self.metric_1
+          param: x
+        - source: self.metric_2
+          param: y
+
+  - name: metric_4
+    operation:
+      type: divide
+      parameters:
+        - source: self.metric_3
+          param: x
+        - source: waste.was_4
+          param: y
